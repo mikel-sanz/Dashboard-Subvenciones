@@ -1,4 +1,4 @@
-# ruff: noqa: E402
+# ruff: noqa: E402, I001
 """
 Orquestador Principal del Dashboard Streamlit.
 
@@ -25,6 +25,9 @@ from src.ingestion.espana_bdns import EspanaBdnsExtractor
 from src.ingestion.europa_funding import EuropaFundingExtractor
 from src.ingestion.navarra_ckan import NavarraCkanExtractor
 from src.processing.normalizer import Normalizer
+import importlib
+import src.storage.database
+importlib.reload(src.storage.database)
 from src.storage.database import DatabaseManager, UsuarioDB
 from src.visualization.charts import (
     crear_grafico_barras_actividad,
