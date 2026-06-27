@@ -163,3 +163,33 @@ def test_baja_usuario_y_obtener_lista(
     # Dar de baja a un usuario inexistente
     exito_inexistente = db.eliminar_usuario("usuario_fantasma")
     assert exito_inexistente is False
+
+
+def test_actualizar_contrasena(db_manager_in_memory: DatabaseManager) -> None:
+    """
+    ARRANGE: Registrar un usuario con contraseña inicial.
+    ACT: Modificar la contraseña del usuario y validar con la nueva y la vieja.
+    ASSERT: Verificar que la contraseña cambia con éxito, autentica con la nueva
+            y falla con la antigua.
+    """
+    db = db_manager_in_memory
+
+    username = "user_test_pwd"
+    email = "testpwd@moriarty.local"
+    password_vieja = "vieja123"
+    password_nueva = "nueva456"
+
+    db.crear_usuario(username, email, password_vieja)
+
+    # Act - Actualizar contraseña
+    exito_cambio = db.actualizar_contrasena(username, password_nueva)
+    assert exito_cambio is True
+
+    # Assert - Comprobar autenticación con ambas
+    assert db.validar_credenciales(username, password_nueva) is True
+    assert db.validar_credenciales(username, password_vieja) is False
+
+    # Act & Assert - Intentar cambiar contraseña de un usuario que no existe
+    exito_fantasma = db.actualizar_contrasena("fantasma", password_nueva)
+    assert exito_fantasma is False
+

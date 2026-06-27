@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """
 Orquestador Principal del Dashboard Streamlit.
 
@@ -353,7 +354,7 @@ with tab_users:
         unsafe_allow_html=True,
     )
 
-    col_alta, col_baja = st.columns(2)
+    col_alta, col_cambio, col_baja = st.columns(3)
 
     with col_alta:
         st.markdown("### Registrar Nuevo Usuario")
@@ -374,10 +375,14 @@ with tab_users:
             boton_alta = st.form_submit_button("Crear Usuario")
 
             if boton_alta:
-                if not nuevo_username or not nuevo_email or not nueva_contrasena:
-                    st.error("Por favor, rellene todos los campos del formulario.")
+                if (
+                    not nuevo_username
+                    or not nuevo_email
+                    or not nueva_contrasena
+                ):
+                    st.error("Por favor, rellene todos los campos.")
                 elif "@" not in nuevo_email or "." not in nuevo_email:
-                    st.error("El formato del correo electrónico es inválido.")
+                    st.error("Formato de correo electrónico inválido.")
                 else:
                     exito = db_manager.crear_usuario(
                         username=nuevo_username,
@@ -389,45 +394,100 @@ with tab_users:
                             username=username_activo,
                             accion="Alta de Usuario",
                             detalles=(
-                                f"Se creó con éxito al usuario '{nuevo_username}' "
-                                f"con email '{nuevo_email}'."
+                                f"Se creó con éxito al usuario "
+                                f"'{nuevo_username}' con email "
+                                f"'{nuevo_email}'."
                             ),
                         )
-                        st.success(f"¡Usuario '{nuevo_username}' creado con éxito!")
+                        st.success(
+                            f"¡Usuario '{nuevo_username}' creado!"
+                        )
                         st.rerun()
                     else:
                         st.error(
-                            f"Error al registrar al usuario '{nuevo_username}'. "
-                            "El nombre de usuario podría estar duplicado."
+                            f"Fallo al registrar usuario. El "
+                            f"username '{nuevo_username}' podría estar "
+                            f"duplicado."
                         )
 
-    with col_baja:
-        st.markdown("### Eliminar Usuario del Sistema")
+    # Obtener lista fresca de usuarios de la base de datos
+    usuarios = db_manager.obtener_usuarios()
+
+    with col_cambio:
+        st.markdown("### Cambiar Contraseña")
         st.write(
-            "Seleccione un usuario de la lista para darlo de baja del sistema "
-            "de forma permanente."
+            "Permite actualizar la contraseña de acceso de cualquier "
+            "usuario existente en el sistema de forma segura."
         )
 
-        usuarios = db_manager.obtener_usuarios()
+        nombres_todos = [u.username for u in usuarios]
+        if nombres_todos:
+            with st.form("form_cambio_contrasena", clear_on_submit=True):
+                user_seleccionado = st.selectbox(
+                    "Seleccionar usuario:",
+                    options=nombres_todos,
+                )
+                contrasena_nueva = st.text_input(
+                    "Nueva contraseña:",
+                    type="password",
+                    help="Introduzca la nueva contraseña del usuario.",
+                )
+                boton_cambio = st.form_submit_button(
+                    "Actualizar Contraseña"
+                )
+
+                if boton_cambio:
+                    if not contrasena_nueva:
+                        st.error("Por favor, introduzca la contraseña.")
+                    elif len(contrasena_nueva) < 4:
+                        st.error("La contraseña debe tener al menos 4 caracteres.")
+                    else:
+                        exito = db_manager.actualizar_contrasena(
+                            username=user_seleccionado,
+                            nueva_contrasena_plana=contrasena_nueva,
+                        )
+                        if exito:
+                            db_manager.registrar_evento_auditoria(
+                                username=username_activo,
+                                accion="Cambio de Contraseña",
+                                detalles=(
+                                    f"Se actualizó la contraseña del "
+                                    f"usuario '{user_seleccionado}'."
+                                ),
+                            )
+                            st.success("¡Contraseña actualizada!")
+                            st.rerun()
+                        else:
+                            st.error("Error al actualizar la contraseña.")
+        else:
+            st.info("No hay usuarios registrados en el sistema.")
+
+    with col_baja:
+        st.markdown("### Eliminar Usuario")
+        st.write(
+            "Seleccione un usuario de la lista para darlo de baja del "
+            "sistema de forma permanente."
+        )
+
         # Excluir al usuario actual para evitar auto-eliminación
-        nombres_usuarios = [
+        nombres_baja = [
             u.username for u in usuarios if u.username != username_activo
         ]
 
-        if nombres_usuarios:
+        if nombres_baja:
             usuario_a_eliminar = st.selectbox(
                 "Seleccionar usuario para dar de baja:",
-                options=nombres_usuarios,
+                options=nombres_baja,
             )
 
-            # Confirmación adicional para seguridad (evitar clicks accidentales)
+            # Confirmación adicional para seguridad
             confirmar_baja = st.checkbox(
-                f"Confirmar baja definitiva del usuario '{usuario_a_eliminar}'"
+                f"Confirmar baja de '{usuario_a_eliminar}'"
             )
 
             if st.button("❌ Dar de Baja Usuario", type="primary"):
                 if not confirmar_baja:
-                    st.warning("Debe marcar la casilla de confirmación para proceder.")
+                    st.warning("Marque la casilla de confirmación.")
                 else:
                     exito = db_manager.eliminar_usuario(usuario_a_eliminar)
                     if exito:
@@ -440,12 +500,12 @@ with tab_users:
                             ),
                         )
                         st.success(
-                            f"¡Usuario '{usuario_a_eliminar}' dado de baja con éxito!"
+                            f"¡Usuario '{usuario_a_eliminar}' eliminado!"
                         )
                         st.rerun()
                     else:
                         st.error(
-                            f"No se pudo eliminar al usuario '{usuario_a_eliminar}'."
+                            "No se pudo eliminar al usuario."
                         )
         else:
-            st.info("No hay otros usuarios registrados en el sistema para dar de baja.")
+            st.info("No hay otros usuarios registrados para dar de baja.")

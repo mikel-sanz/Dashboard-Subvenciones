@@ -379,3 +379,45 @@ class DatabaseManager:
             return False
         finally:
             session.close()
+
+    def actualizar_contrasena(
+        self, username: str, nueva_contrasena_plana: str
+    ) -> bool:
+        """
+        Actualiza la contraseña de un usuario hasheándola con bcrypt.
+        """
+        session = self.SessionLocal()
+        try:
+            usuario = (
+                session.query(UsuarioDB)
+                .filter(UsuarioDB.username == username)
+                .first()
+            )
+            if not usuario:
+                logger.warning(
+                    f"Intento de actualizar contraseña de usuario "
+                    f"inexistente: '{username}'"
+                )
+                return False
+
+            # Hashear la nueva contraseña con bcrypt
+            salt = bcrypt.gensalt()
+            pwd_bytes = nueva_contrasena_plana.encode("utf-8")
+            password_hash = bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+
+            usuario.password_hash = password_hash
+            session.commit()
+            logger.info(
+                f"Contraseña actualizada correctamente para el usuario: "
+                f"'{username}'"
+            )
+            return True
+        except Exception as exc:
+            session.rollback()
+            logger.error(
+                f"Error al actualizar contraseña del usuario '{username}': "
+                f"{exc}"
+            )
+            return False
+        finally:
+            session.close()
