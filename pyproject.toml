@@ -1,0 +1,37 @@
+[tool.ruff]
+# Longitud máxima de línea estándar PEP 8
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+# Seleccionar reglas estándar de Pyflakes (F), pycodestyle (E, W), isort (I) y PEP 8 naming (N)
+select = ["E", "F", "W", "I", "N", "B", "C90"]
+ignore = []
+
+# Excluir directorios comunes
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist"
+]
+
+[tool.mypy]
+python_version = "3.10"
+# Habilitar tipado estricto para asegurar Type Hints obligatorios
+strict = true
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"

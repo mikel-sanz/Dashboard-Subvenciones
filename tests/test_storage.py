@@ -1,0 +1,165 @@
+"""
+Pruebas Unitarias para la Capa de Persistencia (SQLite).
+
+Este módulo valida la correcta inserción en la base de datos local SQLite,
+la prevención efectiva de duplicados lógicos y la lectura a DataFrames de Pandas.
+"""
+
+import datetime
+
+from src.processing.schemas import SubvencionSchema
+from src.storage.database import DatabaseManager, SubvencionDB
+
+
+def test_insertar_y_cargar_dataframe(db_manager_in_memory: DatabaseManager) -> None:
+    """
+    ARRANGE: Configurar una base de datos en memoria vacía y crear dos registros
+             de subvenciones normalizados.
+    ACT: Insertar los registros en lote y cargar el DataFrame resultante.
+    ASSERT: Validar que se insertaron 2 registros, que el DataFrame cargado no
+            está vacío y que contiene las columnas con los tipos correctos.
+    """
+    db = db_manager_in_memory
+
+    subvenciones = [
+        SubvencionSchema(
+            Tipo_Subvencion="Ayudas Kit Digital",
+            Cuantia=150000.0,
+            Fecha_Vigencia=datetime.date(2026, 12, 31),
+            Entidad_Convocante="Ministerio de Economía",
+            Ambito_Territorial="España",
+            Actividad_Relacionada="Digitalización/Robótica",
+            Es_Simulado=True,
+        ),
+        SubvencionSchema(
+            Tipo_Subvencion="Subvenciones LIFE Green",
+            Cuantia=2500000.0,
+            Fecha_Vigencia=datetime.date(2026, 9, 30),
+            Entidad_Convocante="Comisión Europea",
+            Ambito_Territorial="Europa",
+            Actividad_Relacionada="Transición Verde/Sostenibilidad",
+            Es_Simulado=False,
+        ),
+    ]
+
+    # Inserción
+    insertados_cnt = db.bulk_insert(subvenciones)
+    assert insertados_cnt == 2
+
+    # Carga de DataFrame
+    df = db.load_as_dataframe()
+
+    assert df.shape[0] == 2
+    assert "Tipo_Subvencion" in df.columns
+    assert "Cuantia" in df.columns
+    assert "Fecha_Vigencia" in df.columns
+    assert "Es_Simulado" in df.columns
+
+    # Validar tipos de datos
+    assert df["Cuantia"].iloc[0] == 150000.0
+    assert df["Ambito_Territorial"].iloc[1] == "Europa"
+    assert bool(df["Es_Simulado"].iloc[0]) is True
+    assert bool(df["Es_Simulado"].iloc[1]) is False
+    assert isinstance(df["Fecha_Vigencia"].iloc[0], datetime.date)
+
+
+def test_prevencion_duplicados_deterministica(
+    db_manager_in_memory: DatabaseManager,
+) -> None:
+    """
+    ARRANGE: Configurar DB en memoria y crear un registro único.
+    ACT: Insertar el mismo registro dos veces.
+    ASSERT: Validar que la segunda inserción reporta 0 y evita duplicados.
+    """
+    db = db_manager_in_memory
+
+    sub = SubvencionSchema(
+        Tipo_Subvencion="Ayuda Duplicable",
+        Cuantia=12000.0,
+        Fecha_Vigencia=datetime.date(2026, 10, 15),
+        Entidad_Convocante="Gobierno de Navarra",
+        Ambito_Territorial="Navarra",
+        Actividad_Relacionada="Educación/Social",
+        Es_Simulado=True,
+    )
+
+    # Primera inserción
+    res1 = db.bulk_insert([sub])
+    assert res1 == 1
+
+    # Segunda inserción (del mismo registro exacto)
+    res2 = db.bulk_insert([sub])
+    assert res2 == 0
+
+    # Comprobación física en base de datos
+    session = db.SessionLocal()
+    conteo_fisico = session.query(SubvencionDB).count()
+    session.close()
+
+    assert conteo_fisico == 1
+
+
+def test_alta_usuario_y_validar_credenciales(
+    db_manager_in_memory: DatabaseManager,
+) -> None:
+    """
+    ARRANGE: Configurar base de datos y preparar datos de usuario de prueba.
+    ACT: Crear el usuario y validar sus credenciales correctas e incorrectas.
+    ASSERT: Verificar que la creación es exitosa, no admite duplicados y
+            la autenticación valida hashes bcrypt de forma correcta.
+    """
+    db = db_manager_in_memory
+
+    username = "operador"
+    email = "operador@moriarty.local"
+    password = "seguraPassword123"
+
+    # Act - Registro
+    exito_alta = db.crear_usuario(username, email, password)
+    assert exito_alta is True
+
+    # Act - Intento de duplicado
+    exito_duplicado = db.crear_usuario(username, email, password)
+    assert exito_duplicado is False
+
+    # Act & Assert - Validar credenciales correctas e incorrectas
+    assert db.validar_credenciales(username, password) is True
+    assert db.validar_credenciales(username, "incorrecta") is False
+    assert db.validar_credenciales("inexistente", password) is False
+
+
+def test_baja_usuario_y_obtener_lista(
+    db_manager_in_memory: DatabaseManager,
+) -> None:
+    """
+    ARRANGE: Crear un usuario de prueba en la base de datos.
+    ACT: Obtener lista de usuarios, dar de baja al usuario y re-obtener lista.
+    ASSERT: Verificar que el usuario aparece en la lista, luego se elimina
+            correctamente y ya no se encuentra registrado en el sistema.
+    """
+    db = db_manager_in_memory
+
+    username = "temporal_user"
+    email = "temporal@moriarty.local"
+    password = "tempPassword"
+
+    # Registro
+    db.crear_usuario(username, email, password)
+
+    # Act - Obtener lista inicial (incluye admin por defecto sembrado)
+    usuarios_iniciales = db.obtener_usuarios()
+    nombres_usuarios_iniciales = [u.username for u in usuarios_iniciales]
+    assert username in nombres_usuarios_iniciales
+
+    # Act - Dar de baja
+    exito_baja = db.eliminar_usuario(username)
+    assert exito_baja is True
+
+    # Act - Comprobación final
+    usuarios_finales = db.obtener_usuarios()
+    nombres_usuarios_finales = [u.username for u in usuarios_finales]
+    assert username not in nombres_usuarios_finales
+
+    # Dar de baja a un usuario inexistente
+    exito_inexistente = db.eliminar_usuario("usuario_fantasma")
+    assert exito_inexistente is False

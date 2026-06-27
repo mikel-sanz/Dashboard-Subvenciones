@@ -1,0 +1,69 @@
+{
+  "help": "https://datosabiertos.navarra.es/es/api/3/action/help_show?name=datastore_search",
+  "success": true,
+  "result": {
+    "include_total": true,
+    "limit": 3,
+    "records_format": "objects",
+    "resource_id": "50147e28-5edb-40c0-842e-bc7dfe3589b1",
+    "total_estimation_threshold": null,
+    "records": [
+      {
+        "_id": 1,
+        "OrgGestor/Capit/Partida Presupuestaria": "030000 03300 6094 921102  MRR Encargo a TRACASA Instrumental. Modernización padrón mun",
+        "Credito inicial": "0",
+        "Modific Credito": "96268,6",
+        "Consolidado": "96268,6",
+        "Obligacion": "37417,8"
+      },
+      {
+        "_id": 2,
+        "OrgGestor/Capit/Partida Presupuestaria": "080000 08000 6020 232202  MRR Centro de atención integral 24 horas",
+        "Credito inicial": "10",
+        "Modific Credito": "14990",
+        "Consolidado": "15000",
+        "Obligacion": "0"
+      },
+      {
+        "_id": 3,
+        "OrgGestor/Capit/Partida Presupuestaria": "080000 08000 6020 232203  MRR Encargo a NASUVINSA. Proyecto de Obras",
+        "Credito inicial": "10",
+        "Modific Credito": "0",
+        "Consolidado": "10",
+        "Obligacion": "0"
+      }
+    ],
+    "fields": [
+      {
+        "id": "_id",
+        "type": "int"
+      },
+      {
+        "id": "OrgGestor/Capit/Partida Presupuestaria",
+        "type": "text"
+      },
+      {
+        "id": "Credito inicial",
+        "type": "text"
+      },
+      {
+        "id": "Modific Credito",
+        "type": "text"
+      },
+      {
+        "id": "Consolidado",
+        "type": "text"
+      },
+      {
+        "id": "Obligacion",
+        "type": "text"
+      }
+    ],
+    "_links": {
+      "start": "/api/3/action/datastore_search?resource_id=50147e28-5edb-40c0-842e-bc7dfe3589b1&limit=3",
+      "next": "/api/3/action/datastore_search?resource_id=50147e28-5edb-40c0-842e-bc7dfe3589b1&limit=3&offset=3"
+    },
+    "total": 139,
+    "total_was_estimated": false
+  }
+}
