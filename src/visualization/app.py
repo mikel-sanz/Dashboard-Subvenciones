@@ -7,6 +7,13 @@ datos simulados, y renderiza los componentes de visualización interactiva.
 """
 
 import logging
+import sys
+from pathlib import Path
+
+# Añadir el directorio raíz del proyecto al sys.path para importaciones absolutas
+root_dir = Path(__file__).resolve().parents[2]
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
 
 import pandas as pd
 import streamlit as st
