@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     SMTP_FROM_EMAIL: str = "noreply@dashboard-subvenciones.com"
 
+    # Configuración de Refresco Automático y Scheduler
+    SCHEDULER_HOUR: int = 6
+    AUTO_REFRESH_THRESHOLD_HOURS: int = 24
+
     # Configuración de carga de archivos externos
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

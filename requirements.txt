@@ -4,6 +4,7 @@ tenacity>=8.2.0
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
+apscheduler>=3.10.0
 
 # Procesamiento y Almacenamiento
 pandas>=2.0.0

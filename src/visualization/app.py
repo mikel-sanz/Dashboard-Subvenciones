@@ -10,6 +10,7 @@ datos simulados, y renderiza los componentes de visualización interactiva.
 import datetime
 import logging
 import sys
+import threading
 from pathlib import Path
 
 # Añadir el directorio raíz del proyecto al sys.path para importaciones absolutas
@@ -113,6 +114,63 @@ if "auditoria_login_registrada" not in st.session_state:
 
 # Añadir botón de logout en el panel lateral
 authenticator.logout("Cerrar Sesión", "sidebar")
+
+# --- 1. INICIALIZACIÓN DEL SCHEDULER ASÍNCRONO (SINGLETON SEGURO) ---
+if "scheduler_iniciado" not in st.session_state:
+    from src.ingestion.scheduler import IngestionScheduler
+    scheduler_inst = IngestionScheduler(db_manager)
+    scheduler_inst.start()
+    st.session_state["scheduler_iniciado"] = True
+
+# --- 2. MECANISMO DE FALLBACK AUTOMÁTICO POR TIEMPO TRANSCURRIDO ---
+if "refresco_inicial_verificado" not in st.session_state:
+    session_audit = db_manager.SessionLocal()
+    from src.storage.database import LogAuditoriaDB
+    try:
+        # Buscar la última acción de ingesta exitosa
+        ultimo_log = (
+            session_audit.query(LogAuditoriaDB)
+            .filter(
+                LogAuditoriaDB.accion.in_(
+                    [
+                        "Ingesta de Datos (Scheduler)",
+                        "Ingesta de Datos (Manual)",
+                        "Inicio de Ingesta",
+                    ]
+                )
+            )
+            .order_by(LogAuditoriaDB.fecha_hora.desc())
+            .first()
+        )
+
+        ejecutar_refresco = False
+        if not ultimo_log:
+            ejecutar_refresco = True
+        else:
+            diferencia = datetime.datetime.utcnow() - ultimo_log.fecha_hora
+            if diferencia.total_seconds() > (
+                settings.AUTO_REFRESH_THRESHOLD_HOURS * 3600
+            ):
+                ejecutar_refresco = True
+
+        if ejecutar_refresco:
+            logger.info(
+                "El refresco programado no se ejecutó en las últimas 24h. "
+                "Lanzando actualización automática de fallback..."
+            )
+            from src.ingestion.scheduler import IngestionScheduler
+            scheduler_temp = IngestionScheduler(db_manager)
+            threading.Thread(
+                target=scheduler_temp.ejecutar_ingesta_y_notificar,
+                daemon=True,
+            ).start()
+    except Exception as exc:
+        logger.error(
+            f"Error al verificar refresco automático de fallback: {exc}"
+        )
+    finally:
+        session_audit.close()
+    st.session_state["refresco_inicial_verificado"] = True
 
 
 def ejecutar_ingesta_inicial() -> None:
@@ -334,18 +392,23 @@ with tab_admin:
     if st.button("🔄 Ejecutar Ingesta Manual (APIs en Vivo)"):
         with st.spinner("Conectando con las APIs y actualizando registros..."):
             try:
-                # Disparamos la ingesta manual
-                ejecutar_ingesta_inicial()
+                # Disparamos la ingesta manual que incluye el triggering de alertas
+                from src.ingestion.scheduler import IngestionScheduler
+                scheduler_temp = IngestionScheduler(db_manager)
+                scheduler_temp.ejecutar_ingesta_y_notificar()
+
                 # Purgamos la caché de datos de Streamlit para obligar recarga de DB
                 st.cache_data.clear()
+
                 # Registrar el evento en logs de auditoría
                 db_manager.registrar_evento_auditoria(
                     username=username_activo,
-                    accion="Ingesta Manual",
-                    detalles="Ejecución forzada de sincronización de APIs en vivo.",
+                    accion="Ingesta de Datos (Manual)",
+                    detalles="Sincronización manual forzada de APIs en vivo.",
                 )
                 st.success(
-                    "¡Ingesta de datos finalizada y caché de consultas actualizada!"
+                    "¡Ingesta finalizada, alertas enviadas y caché "
+                    "actualizada con éxito!"
                 )
                 # Forzar recarga automática de la UI para mostrar datos nuevos
                 st.rerun()
