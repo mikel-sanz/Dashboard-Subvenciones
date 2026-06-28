@@ -62,6 +62,46 @@ def render_sidebar_filters(df: pd.DataFrame) -> dict[str, Any]:
         help="Seleccione los sectores estratégicos de interés.",
     )
 
+    # 3. Filtro por Estado de Vigencia (Activas / Expiradas)
+    estado_vigencia = st.sidebar.selectbox(
+        "Estado de Vigencia:",
+        options=[
+            "Solo Vigentes / Activas (En plazo)",
+            "Solo Expiradas (Fuera de plazo)",
+            "Todas las convocatorias",
+        ],
+        index=0,  # Por defecto muestra solo las activas
+        help="Filtrar por plazo de presentación de las ayudas.",
+    )
+
+    st.sidebar.markdown("**Rango de Fechas (Vigencia):**")
+    hoy_ref = datetime.date.today()
+    fecha_min = df["Fecha_Vigencia"].min() if not df.empty else hoy_ref
+    fecha_max = (
+        df["Fecha_Vigencia"].max()
+        if not df.empty
+        else hoy_ref + datetime.timedelta(days=365)
+    )
+
+    rango_fechas = st.sidebar.date_input(
+        "Seleccionar rango:",
+        value=(fecha_min, fecha_max),
+        min_value=fecha_min,
+        max_value=fecha_max,
+        help="Establezca la ventana de fechas límites de presentación.",
+        label_visibility="collapsed",
+    )
+
+    # Procesar retorno del rango de fechas de forma robusta
+    if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
+        fecha_inicio, fecha_fin = rango_fechas
+    elif isinstance(rango_fechas, tuple) and len(rango_fechas) == 1:
+        fecha_inicio = rango_fechas[0]
+        fecha_fin = fecha_max
+    else:
+        fecha_inicio = fecha_min
+        fecha_fin = fecha_max
+
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         "<div style='font-size:0.85em; color:gray; text-align:center;'>"
@@ -70,7 +110,13 @@ def render_sidebar_filters(df: pd.DataFrame) -> dict[str, Any]:
         unsafe_allow_html=True,
     )
 
-    return {"ambitos": ambitos_seleccionados, "sectores": sectores_seleccionados}
+    return {
+        "ambitos": ambitos_seleccionados,
+        "sectores": sectores_seleccionados,
+        "estado_vigencia": estado_vigencia,
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
+    }
 
 
 def render_kpi_metrics(df: pd.DataFrame) -> None:

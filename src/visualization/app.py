@@ -7,6 +7,7 @@ si no hay datos persistidos, aplica los filtros dinámicos, muestra alertas en c
 datos simulados, y renderiza los componentes de visualización interactiva.
 """
 
+import datetime
 import logging
 import sys
 from pathlib import Path
@@ -192,6 +193,21 @@ with tab_dashboard:
     else:
         if not filtros["sectores"]:
             df_filtrado = df_filtrado.iloc[0:0]
+
+    # Filtro por Estado de Vigencia (En plazo / Fuera de plazo)
+    if not df_filtrado.empty:
+        hoy = datetime.date.today()
+        if filtros["estado_vigencia"] == "Solo Vigentes / Activas (En plazo)":
+            df_filtrado = df_filtrado[df_filtrado["Fecha_Vigencia"] >= hoy]
+        elif filtros["estado_vigencia"] == "Solo Expiradas (Fuera de plazo)":
+            df_filtrado = df_filtrado[df_filtrado["Fecha_Vigencia"] < hoy]
+
+    # Filtro por Rango de Fechas de Vigencia
+    if not df_filtrado.empty:
+        df_filtrado = df_filtrado[
+            (df_filtrado["Fecha_Vigencia"] >= filtros["fecha_inicio"])
+            & (df_filtrado["Fecha_Vigencia"] <= filtros["fecha_fin"])
+        ]
 
     # --- 3. DETECCIÓN Y SEÑALIZACIÓN DE DATOS SIMULADOS (REQUISITO CRÍTICO) ---
     # Solo mostramos advertencia si los datos en pantalla contienen fallback
