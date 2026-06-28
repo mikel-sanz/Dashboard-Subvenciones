@@ -89,8 +89,20 @@ elif st.session_state["authentication_status"] is None:
     st.info("Introduce tus credenciales para acceder al dashboard.")
     st.stop()
 
-# Registrar log de auditoría del inicio de sesión (una vez por sesión)
+# Validar que el usuario que dice estar autenticado realmente existe en la base de datos
 username_activo = st.session_state["username"]
+if username_activo not in credentials["usernames"]:
+    # Forzar el logout y limpiar cookies/sesión
+    authenticator.logout("Cerrar Sesión", "sidebar")
+    st.session_state["authentication_status"] = None
+    st.session_state["username"] = None
+    st.warning(
+        "Tu sesión ha expirado o el usuario ya no existe en la base de "
+        "datos. Por favor inicia sesión de nuevo."
+    )
+    st.rerun()
+
+# Registrar log de auditoría del inicio de sesión (una vez por sesión)
 if "auditoria_login_registrada" not in st.session_state:
     db_manager.registrar_evento_auditoria(
         username=username_activo,
