@@ -220,6 +220,14 @@ def cargar_datos_cached() -> pd.DataFrame:
 # --- 1. CARGA DE DATOS ---
 df_original = cargar_datos_cached()
 
+if db_manager.fallback_activo:
+    st.warning(
+        "⚠️ **Aviso de Persistencia**: La aplicación no pudo conectarse a la "
+        "base de datos PostgreSQL externa configurada. Se ha activado el "
+        "almacenamiento local SQLite como fallback. Los datos y usuarios "
+        "creados podrían borrarse al reiniciarse el contenedor en la nube."
+    )
+
 st.markdown(
     "<h1 id='title-main' style='color:#012A4A; font-family:sans-serif; "
     "text-align:center; margin-bottom:10px;'>"

@@ -109,9 +109,36 @@ class DatabaseManager:
 
     def __init__(self, db_url: str = settings.DATABASE_URL) -> None:
         self.db_url = db_url
+        self.fallback_activo = False
 
+        # Corrección de protocolo para SQLAlchemy 2.0+ (postgres:// -> postgresql://)
+        if self.db_url.startswith("postgres://"):
+            self.db_url = self.db_url.replace("postgres://", "postgresql://", 1)
+
+        try:
+            self._inicializar_base_datos()
+        except Exception as exc:
+            logger.error(
+                f"Fallo al conectar a DB externa: {exc}. "
+                "Iniciando fallback a SQLite local..."
+            )
+            # Activar fallback a SQLite local
+            self.db_url = "sqlite:///data/processed/subvenciones.db"
+            self.fallback_activo = True
+            try:
+                self._inicializar_base_datos()
+            except Exception as backup_exc:
+                logger.critical(
+                    f"No se pudo inicializar la DB SQLite local: {backup_exc}"
+                )
+                raise backup_exc
+
+    def _inicializar_base_datos(self) -> None:
+        """
+        Crea los directorios necesarios, inicializa el engine, sesión,
+        crea las tablas y siembra los datos por defecto.
+        """
         # Si es SQLite local, creamos los directorios padres.
-        # Previene errores de directorio inexistente en SQLAlchemy.
         if self.db_url.startswith("sqlite:///"):
             path_str = self.db_url.replace("sqlite:///", "")
             if path_str != ":memory:":
@@ -129,11 +156,11 @@ class DatabaseManager:
             bind=self.engine, autoflush=False, autocommit=False
         )
 
-        # Crear las tablas en la base de datos si no existen
+        # Validar conexión y crear tablas
         Base.metadata.create_all(bind=self.engine)
         self._migrar_usuarios_columnas()
         self.sembrar_usuario_defecto()
-        logger.info("Estructura de base de datos inicializada correctamente.")
+        logger.info("Base de datos inicializada correctamente.")
 
     def bulk_insert(self, subvenciones: list[SubvencionSchema]) -> int:
         """
