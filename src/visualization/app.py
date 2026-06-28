@@ -629,7 +629,7 @@ with tab_users:
                 else ",".join(ambitos_sel)
             )
 
-            exito = db_manager.actualizar_preferencias_alertas(
+            exito, err_msg = db_manager.actualizar_preferencias_alertas(
                 username=username_activo,
                 recibir=recibir,
                 sectores=sectores_str,
@@ -648,4 +648,6 @@ with tab_users:
                 st.success("¡Tus preferencias de alertas se han guardado con éxito!")
                 st.rerun()
             else:
-                st.error("Ocurrió un error al persistir tus preferencias de alertas.")
+                st.error(
+                    f"Ocurrió un error al persistir tus preferencias: {err_msg}"
+                )

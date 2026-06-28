@@ -193,3 +193,38 @@ def test_actualizar_contrasena(db_manager_in_memory: DatabaseManager) -> None:
     exito_fantasma = db.actualizar_contrasena("fantasma", password_nueva)
     assert exito_fantasma is False
 
+
+def test_actualizar_preferencias_alertas(db_manager_in_memory) -> None:
+    """
+    ARRANGE: Registrar un usuario.
+    ACT: Actualizar sus preferencias de alertas.
+    ASSERT: Verificar que la actualización devuelve éxito y se persiste.
+    """
+    db = db_manager_in_memory
+    username = "user_alerts_pref"
+    email = "testalerts@moriarty.local"
+
+    db.crear_usuario(username, email, "pass123")
+
+    # Act
+    exito, err_msg = db.actualizar_preferencias_alertas(
+        username=username,
+        recibir=True,
+        sectores="Agroalimentario,Educación/Social",
+        ambitos="Europa,Navarra"
+    )
+
+    # Assert
+    assert exito is True
+    assert err_msg == ""
+
+    # Validar persistencia real en la sesión de base de datos
+    session = db.SessionLocal()
+    from src.storage.database import UsuarioDB
+    user_db = session.query(UsuarioDB).filter(UsuarioDB.username == username).first()
+    assert user_db.recibir_alertas is True
+    assert user_db.sectores_interes == "Agroalimentario,Educación/Social"
+    assert user_db.ambitos_interes == "Europa,Navarra"
+    session.close()
+
+

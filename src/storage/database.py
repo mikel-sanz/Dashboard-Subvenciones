@@ -458,7 +458,7 @@ class DatabaseManager:
 
     def actualizar_preferencias_alertas(
         self, username: str, recibir: bool, sectores: str, ambitos: str
-    ) -> bool:
+    ) -> tuple[bool, str]:
         """
         Actualiza las preferencias de alertas por correo electrónico de un usuario.
         """
@@ -470,11 +470,9 @@ class DatabaseManager:
                 .first()
             )
             if not usuario:
-                logger.warning(
-                    "Intento de actualizar preferencias de alertas de usuario "
-                    f"inexistente: '{username}'"
-                )
-                return False
+                msg = f"Usuario inexistente: '{username}'"
+                logger.warning(f"Intento de actualizar preferencias: {msg}")
+                return False, msg
 
             usuario.recibir_alertas = recibir
             usuario.sectores_interes = sectores
@@ -484,13 +482,14 @@ class DatabaseManager:
                 f"Preferencias de alertas actualizadas correctamente para: "
                 f"'{username}'"
             )
-            return True
+            return True, ""
         except Exception as exc:
             session.rollback()
+            err_msg = str(exc)
             logger.error(
                 "Error al actualizar preferencias de alertas de "
-                f"'{username}': {exc}"
+                f"'{username}': {err_msg}"
             )
-            return False
+            return False, err_msg
         finally:
             session.close()
