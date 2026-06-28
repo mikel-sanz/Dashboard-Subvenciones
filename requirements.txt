@@ -9,6 +9,7 @@ apscheduler>=3.10.0
 # Procesamiento y Almacenamiento
 pandas>=2.0.0
 sqlalchemy>=2.0.0
+sentence-transformers>=2.2.2
 
 # Frontend y Visualización
 streamlit>=1.30.0

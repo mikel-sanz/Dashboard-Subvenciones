@@ -423,6 +423,34 @@ with tab_admin:
             except Exception as exc:
                 st.error(f"Fallo durante la sincronización manual: {exc}")
 
+    # Acción 2: Estado del Clasificador Semántico NLP
+    st.markdown("### Estado del Clasificador Semántico (NLP)")
+    from src.processing.classifier import SemanticClassifier
+
+    if not settings.USE_SEMANTIC_CLASSIFIER:
+        st.info(
+            "ℹ️ **Heurística Clásica Activa**: La clasificación "
+            "semántica NLP está desactivada por configuración global."
+        )
+    elif SemanticClassifier._usar_fallback:
+        st.warning(
+            "⚠️ **Heurística Clásica (Modo Resiliencia)**: El clasificador "
+            "NLP local no pudo inicializarse (falta de memoria o de recursos "
+            "de red). Se ha activado el fallback a palabras clave de forma "
+            "automática."
+        )
+    elif SemanticClassifier._model is not None:
+        st.success(
+            f"🟢 **NLP Semántico Activo**: Modelo `{settings.NLP_MODEL_NAME}` "
+            "cargado correctamente en memoria y precalculando embeddings "
+            "de sectores."
+        )
+    else:
+        st.info(
+            f"⏳ **NLP Semántico Inicializado**: El modelo `{settings.NLP_MODEL_NAME}` "
+            "se cargará de forma perezosa al realizar la primera ingesta."
+        )
+
     st.markdown("<br><hr>", unsafe_allow_html=True)
 
     # Acción 2: Visualización de logs de auditoría

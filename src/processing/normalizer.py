@@ -93,6 +93,16 @@ def limpiar_fecha(valor: Any) -> datetime.date:
 
 def clasificar_actividad(titulo: str, organo: str) -> str:
     """
+    Clasifica una subvención en uno de los 5 sectores estratégicos.
+    Utiliza el clasificador semántico NLP si está activo; si no,
+    hace fallback a la heurística clásica por palabras clave.
+    """
+    from src.processing.classifier import SemanticClassifier
+    return SemanticClassifier.clasificar(titulo, organo)
+
+
+def clasificar_actividad_clasica(titulo: str, organo: str) -> str:
+    """
     Clasifica de forma automatizada la subvención en uno de los 5 sectores estratégicos
     basándose en el análisis de palabras clave en el título y órgano emisor.
     """

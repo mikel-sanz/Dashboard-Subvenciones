@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     SCHEDULER_HOUR: int = 6
     AUTO_REFRESH_THRESHOLD_HOURS: int = 24
 
+    # Clasificador Semántico NLP
+    USE_SEMANTIC_CLASSIFIER: bool = True
+    NLP_MODEL_NAME: str = "paraphrase-multilingual-MiniLM-L12-v2"
+
     # Configuración de carga de archivos externos
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
