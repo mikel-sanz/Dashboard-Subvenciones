@@ -299,7 +299,7 @@ class DatabaseManager:
         """
         Valida el nombre de usuario y su contraseña contra la base de datos.
         """
-        username = username.lower()
+        username = username.upper()
         session = self.SessionLocal()
         try:
             usuario = (
@@ -335,7 +335,7 @@ class DatabaseManager:
         """
         Crea un nuevo usuario encriptando la contraseña con bcrypt.
         """
-        username = username.lower()
+        username = username.upper()
         session = self.SessionLocal()
         try:
             # Comprobar si el usuario ya existe
@@ -369,7 +369,7 @@ class DatabaseManager:
         """
         Elimina un usuario por su nombre de usuario.
         """
-        username = username.lower()
+        username = username.upper()
         session = self.SessionLocal()
         try:
             usuario = (
@@ -396,7 +396,7 @@ class DatabaseManager:
         """
         Actualiza la contraseña de un usuario hasheándola con bcrypt.
         """
-        username = username.lower()
+        username = username.upper()
         session = self.SessionLocal()
         try:
             usuario = (
@@ -466,7 +466,7 @@ class DatabaseManager:
         """
         Actualiza las preferencias de alertas por correo electrónico de un usuario.
         """
-        username = username.lower()
+        username = username.upper()
         session = self.SessionLocal()
         try:
             usuario = (

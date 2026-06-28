@@ -110,7 +110,7 @@ def test_alta_usuario_y_validar_credenciales(
     """
     db = db_manager_in_memory
 
-    username = "operador"
+    username = "OPERADOR"
     email = "operador@moriarty.local"
     password = "seguraPassword123"
 
@@ -139,7 +139,7 @@ def test_baja_usuario_y_obtener_lista(
     """
     db = db_manager_in_memory
 
-    username = "temporal_user"
+    username = "TEMPORAL_USER"
     email = "temporal@moriarty.local"
     password = "tempPassword"
 
@@ -174,7 +174,7 @@ def test_actualizar_contrasena(db_manager_in_memory: DatabaseManager) -> None:
     """
     db = db_manager_in_memory
 
-    username = "user_test_pwd"
+    username = "USER_TEST_PWD"
     email = "testpwd@moriarty.local"
     password_vieja = "vieja123"
     password_nueva = "nueva456"
@@ -201,7 +201,7 @@ def test_actualizar_preferencias_alertas(db_manager_in_memory) -> None:
     ASSERT: Verificar que la actualización devuelve éxito y se persiste.
     """
     db = db_manager_in_memory
-    username = "user_alerts_pref"
+    username = "USER_ALERTS_PREF"
     email = "testalerts@moriarty.local"
 
     db.crear_usuario(username, email, "pass123")
@@ -221,7 +221,9 @@ def test_actualizar_preferencias_alertas(db_manager_in_memory) -> None:
     # Validar persistencia real en la sesión de base de datos
     session = db.SessionLocal()
     from src.storage.database import UsuarioDB
-    user_db = session.query(UsuarioDB).filter(UsuarioDB.username == username).first()
+    user_db = session.query(UsuarioDB).filter(
+        UsuarioDB.username == username.upper()
+    ).first()
     assert user_db.recibir_alertas is True
     assert user_db.sectores_interes == "Agroalimentario,Educación/Social"
     assert user_db.ambitos_interes == "Europa,Navarra"

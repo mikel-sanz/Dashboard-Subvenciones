@@ -61,7 +61,7 @@ try:
     db_users = session.query(UsuarioDB).all()
     credentials = {
         "usernames": {
-            u.username: {
+            u.username.lower(): {
                 "email": u.email,
                 "name": u.username,
                 "password": u.password_hash,
@@ -393,7 +393,7 @@ with tab_users:
             nuevo_username = st.text_input(
                 "Nombre de usuario:",
                 help="Debe ser único en el sistema.",
-            ).strip().lower()
+            ).strip().upper()
             nuevo_email = st.text_input(
                 "Correo electrónico:",
                 help="Ejemplo: usuario@correo.com",
