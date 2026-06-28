@@ -7,7 +7,7 @@ coherencia de los tipos en tiempo de ejecución.
 """
 
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     # Navarra CKAN API
     # ID real del dataset "Rehabilitación protegida de viviendas terminadas"
     NAVARRA_RESOURCE_ID: str = "bdf64326-0f6a-4fa0-b6f3-0b891ba14e62"
+
+    # Configuración de Alertas por Email (SMTP)
+    SMTP_SERVER: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM_EMAIL: str = "noreply@dashboard-subvenciones.com"
 
     # Configuración de carga de archivos externos
     model_config = SettingsConfigDict(

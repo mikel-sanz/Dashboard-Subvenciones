@@ -22,6 +22,7 @@ from sqlalchemy import (
     Integer,
     String,
     create_engine,
+    text,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -64,6 +65,11 @@ class UsuarioDB(Base):  # type: ignore
     username = Column(String, primary_key=True)
     email = Column(String, nullable=False, unique=True)
     password_hash = Column(String, nullable=False)
+
+    # Campos de configuración de alertas
+    recibir_alertas = Column(Boolean, default=False, nullable=False)
+    sectores_interes = Column(String, default="*", nullable=False)
+    ambitos_interes = Column(String, default="*", nullable=False)
 
 
 class LogAuditoriaDB(Base):  # type: ignore
@@ -125,6 +131,7 @@ class DatabaseManager:
 
         # Crear las tablas en la base de datos si no existen
         Base.metadata.create_all(bind=self.engine)
+        self._migrar_usuarios_columnas()
         self.sembrar_usuario_defecto()
         logger.info("Estructura de base de datos inicializada correctamente.")
 
@@ -417,6 +424,72 @@ class DatabaseManager:
             logger.error(
                 f"Error al actualizar contraseña del usuario '{username}': "
                 f"{exc}"
+            )
+            return False
+        finally:
+            session.close()
+
+    def _migrar_usuarios_columnas(self) -> None:
+        """
+        Añade las columnas de alertas de forma dinámica a la tabla de usuarios
+        si no existen previamente, garantizando la compatibilidad.
+        """
+        columnas_migracion = {
+            "recibir_alertas": "BOOLEAN DEFAULT 0 NOT NULL",
+            "sectores_interes": "VARCHAR DEFAULT '*' NOT NULL",
+            "ambitos_interes": "VARCHAR DEFAULT '*' NOT NULL",
+        }
+
+        with self.engine.connect() as conn:
+            for col_name, col_type in columnas_migracion.items():
+                try:
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE usuarios ADD COLUMN {col_name} {col_type}"
+                        )
+                    )
+                    conn.commit()
+                    logger.info(
+                        f"Columna de migración '{col_name}' añadida con éxito "
+                        "a la tabla 'usuarios'."
+                    )
+                except Exception:
+                    pass
+
+    def actualizar_preferencias_alertas(
+        self, username: str, recibir: bool, sectores: str, ambitos: str
+    ) -> bool:
+        """
+        Actualiza las preferencias de alertas por correo electrónico de un usuario.
+        """
+        session = self.SessionLocal()
+        try:
+            usuario = (
+                session.query(UsuarioDB)
+                .filter(UsuarioDB.username == username)
+                .first()
+            )
+            if not usuario:
+                logger.warning(
+                    "Intento de actualizar preferencias de alertas de usuario "
+                    f"inexistente: '{username}'"
+                )
+                return False
+
+            usuario.recibir_alertas = recibir
+            usuario.sectores_interes = sectores
+            usuario.ambitos_interes = ambitos
+            session.commit()
+            logger.info(
+                f"Preferencias de alertas actualizadas correctamente para: "
+                f"'{username}'"
+            )
+            return True
+        except Exception as exc:
+            session.rollback()
+            logger.error(
+                "Error al actualizar preferencias de alertas de "
+                f"'{username}': {exc}"
             )
             return False
         finally:

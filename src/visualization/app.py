@@ -528,3 +528,124 @@ with tab_users:
                         )
         else:
             st.info("No hay otros usuarios registrados para dar de baja.")
+
+    st.markdown("---")
+    st.markdown("### 🔔 Configuración de Preferencias de Alertas por Email")
+    st.write(
+        "Activa o desactiva las notificaciones por correo electrónico "
+        "y define qué tipo de subvenciones deseas vigilar."
+    )
+
+    # Buscar en base de datos las preferencias del usuario actual
+    session = db_manager.SessionLocal()
+    user_db = (
+        session.query(UsuarioDB)
+        .filter(UsuarioDB.username == username_activo)
+        .first()
+    )
+
+    recibir_alertas_val = False
+    sectores_val = "*"
+    ambitos_val = "*"
+
+    if user_db:
+        recibir_alertas_val = user_db.recibir_alertas
+        sectores_val = user_db.sectores_interes
+        ambitos_val = user_db.ambitos_interes
+    session.close()
+
+    # Definir opciones para los selectores multiselect
+    SECTORES_OPCIONES = [
+        "Digitalización/Robótica",
+        "Transición Verde/Sostenibilidad",
+        "Agroalimentario",
+        "Educación/Social",
+        "I+D+i Científica"
+    ]
+    AMBITOS_OPCIONES = ["Europa", "España", "Navarra"]
+
+    # Procesar defaults
+    default_sectores = (
+        SECTORES_OPCIONES
+        if sectores_val == "*"
+        else [s.strip() for s in sectores_val.split(",") if s.strip()]
+    )
+    default_ambitos = (
+        AMBITOS_OPCIONES
+        if ambitos_val == "*"
+        else [a.strip() for a in ambitos_val.split(",") if a.strip()]
+    )
+
+    # Formulario de preferencias
+    help_recibir = (
+        "Las notificaciones se enviarán al correo electrónico registrado "
+        "en tu perfil."
+    )
+    help_sectores = (
+        "Recibirás alertas únicamente para los sectores seleccionados."
+    )
+    help_ambitos = (
+        "Recibirás alertas únicamente para los ámbitos territoriales "
+        "seleccionados."
+    )
+
+    with st.form("form_preferencias_alertas"):
+        col_recibir, _ = st.columns([2, 1])
+        with col_recibir:
+            recibir = st.checkbox(
+                "Deseo recibir correos automáticos al detectarse nuevas subvenciones",
+                value=recibir_alertas_val,
+                help=help_recibir,
+            )
+
+        col_sectores, col_ambitos = st.columns(2)
+        with col_sectores:
+            sectores_sel = st.multiselect(
+                "Filtrar por sectores de actividad:",
+                options=SECTORES_OPCIONES,
+                default=default_sectores,
+                help=help_sectores,
+            )
+        with col_ambitos:
+            ambitos_sel = st.multiselect(
+                "Filtrar por ámbito geográfico:",
+                options=AMBITOS_OPCIONES,
+                default=default_ambitos,
+                help=help_ambitos,
+            )
+
+        boton_guardar_pref = st.form_submit_button("💾 Guardar Preferencias de Alertas")
+
+        if boton_guardar_pref:
+            # Si se seleccionaron todos los elementos, guardamos "*" para simplificar
+            sectores_str = (
+                "*"
+                if len(sectores_sel) == len(SECTORES_OPCIONES) or not sectores_sel
+                else ",".join(sectores_sel)
+            )
+            ambitos_str = (
+                "*"
+                if len(ambitos_sel) == len(AMBITOS_OPCIONES) or not ambitos_sel
+                else ",".join(ambitos_sel)
+            )
+
+            exito = db_manager.actualizar_preferencias_alertas(
+                username=username_activo,
+                recibir=recibir,
+                sectores=sectores_str,
+                ambitos=ambitos_str
+            )
+
+            if exito:
+                db_manager.registrar_evento_auditoria(
+                    username=username_activo,
+                    accion="Modificación de Preferencias de Alertas",
+                    detalles=(
+                        f"Alertas: {recibir}, Sectores: '{sectores_str}', "
+                        f"Ámbitos: '{ambitos_str}'"
+                    )
+                )
+                st.success("¡Tus preferencias de alertas se han guardado con éxito!")
+                st.rerun()
+            else:
+                st.error("Ocurrió un error al persistir tus preferencias de alertas.")
