@@ -393,11 +393,11 @@ with tab_users:
             nuevo_username = st.text_input(
                 "Nombre de usuario:",
                 help="Debe ser único en el sistema.",
-            ).strip()
+            ).strip().lower()
             nuevo_email = st.text_input(
                 "Correo electrónico:",
                 help="Ejemplo: usuario@correo.com",
-            ).strip()
+            ).strip().lower()
             nueva_contrasena = st.text_input(
                 "Contraseña:",
                 type="password",
