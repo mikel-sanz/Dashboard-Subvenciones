@@ -16,6 +16,10 @@ def render_sidebar_filters(df: pd.DataFrame) -> dict[str, Any]:
     """
     Dibuja los selectores en el sidebar e inyecta CSS para evitar scroll.
     """
+    # Mostrar el logo corporativo Trivium
+    st.sidebar.image("imagenes/Trivium.png", use_container_width=True)
+    st.sidebar.markdown("<br>", unsafe_allow_html=True)
+
     st.sidebar.markdown(
         "<h2 style='color:#FFFFFF; font-family:sans-serif;'>Filtros Avanzados</h2>",
         unsafe_allow_html=True,
