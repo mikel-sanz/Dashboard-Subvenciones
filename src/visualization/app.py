@@ -347,16 +347,33 @@ with tab_dashboard:
             ]
         ].sort_values(by="Cuantia", ascending=False).copy()
 
+        # Mapear los importes 0.0 a un texto explicativo para el visor
+        df_visor["Presupuesto"] = df_visor["Cuantia"].apply(
+            lambda x: f"{x:,.2f} €" if x > 0.0 else "Consultar bases oficiales"
+        )
+
+        df_visor_render = df_visor[
+            [
+                "Tipo_Subvencion",
+                "Presupuesto",
+                "Fecha_Vigencia",
+                "Entidad_Convocante",
+                "Ambito_Territorial",
+                "Actividad_Relacionada",
+                "URL_Convocatoria",
+            ]
+        ]
+
         # Las filas sin URL se muestran con campo vacío (no enlace roto)
         st.dataframe(
-            df_visor,
+            df_visor_render,
             width="stretch",
             column_config={
                 "Tipo_Subvencion": st.column_config.TextColumn(
                     "Convocatoria / Línea de Ayuda"
                 ),
-                "Cuantia": st.column_config.NumberColumn(
-                    "Presupuesto (€)", format="%.2f €"
+                "Presupuesto": st.column_config.TextColumn(
+                    "Presupuesto"
                 ),
                 "Fecha_Vigencia": st.column_config.DateColumn(
                     "Fecha Límite / Vigencia"

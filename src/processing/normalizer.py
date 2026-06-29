@@ -267,8 +267,8 @@ class Normalizer:
                 actividad = clasificar_actividad(
                     str(tipo), str(entidad)
                 )
-                # Navarra CKAN no proporciona URLs directas
-                url_convocatoria = ""
+                # Navarra CKAN no tiene URLs directas; usamos portal oficial
+                url_convocatoria = "https://www.navarra.es/es/tramites"
 
             elif origen == "España":
                 # Mapeo para España — BDNS real (endpoint /busqueda)

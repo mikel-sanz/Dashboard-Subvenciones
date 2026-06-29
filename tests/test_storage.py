@@ -230,3 +230,23 @@ def test_actualizar_preferencias_alertas(db_manager_in_memory) -> None:
     session.close()
 
 
+def test_usuarios_semilla_default(db_manager_in_memory: DatabaseManager) -> None:
+    """
+    ARRANGE: Inicializar base de datos en memoria (sembrado por defecto).
+    ACT: Validar credenciales de los usuarios semilla.
+    ASSERT: Confirmar que ADMIN, MIKEL, ANA y BRENDA están registrados
+            y sus contraseñas respectivas se validan de forma correcta.
+    """
+    db = db_manager_in_memory
+
+    # Validar que los usuarios se validan con sus claves
+    assert db.validar_credenciales("ADMIN", "admin123") is True
+    assert db.validar_credenciales("MIKEL", "jeVnmq54H86jspj") is True
+    assert db.validar_credenciales("ANA", "ana123*QP") is True
+    assert db.validar_credenciales("BRENDA", "brenda123*PM") is True
+
+    # Validar que fallan con credenciales incorrectas
+    assert db.validar_credenciales("MIKEL", "clave_erronea") is False
+
+
+

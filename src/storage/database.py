@@ -259,29 +259,56 @@ class DatabaseManager:
 
     def sembrar_usuario_defecto(self) -> None:
         """
-        Siembre un usuario de administración por defecto si la tabla está vacía.
+        Siembre un usuario de administración por defecto si la tabla está vacía,
+        e inyecta los usuarios fijos de producción si no existen.
         """
         session = self.SessionLocal()
         try:
+            # 1. Sembrar admin si la tabla de usuarios está completamente vacía
             usuarios_cnt = session.query(UsuarioDB).count()
             if usuarios_cnt == 0:
                 password_plana = "admin123"
                 pwd_bytes = password_plana.encode("utf-8")
-                # Hashear con sal usando bcrypt
                 salt = bcrypt.gensalt()
                 password_hash = bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
                 usuario_base = UsuarioDB(
-                    username="admin",
+                    username="ADMIN",
                     email="admin@moriarty.local",
                     password_hash=password_hash,
                 )
                 session.add(usuario_base)
                 session.commit()
                 logger.info("Usuario administrador base sembrado con éxito.")
+
+            # 2. Sembrar los tres usuarios fijos requeridos
+            usuarios_fijos = [
+                ("MIKEL", "mikel@trivium.local", "jeVnmq54H86jspj"),
+                ("ANA", "ana@trivium.local", "ana123*QP"),
+                ("BRENDA", "brenda@trivium.local", "brenda123*PM"),
+            ]
+            for usr, email, pwd in usuarios_fijos:
+                existe = (
+                    session.query(UsuarioDB)
+                    .filter(UsuarioDB.username == usr)
+                    .first()
+                )
+                if not existe:
+                    pwd_bytes = pwd.encode("utf-8")
+                    salt = bcrypt.gensalt()
+                    password_hash = bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+
+                    usuario_db = UsuarioDB(
+                        username=usr,
+                        email=email,
+                        password_hash=password_hash,
+                    )
+                    session.add(usuario_db)
+                    session.commit()
+                    logger.info(f"Usuario fijo '{usr}' sembrado con éxito.")
         except Exception as exc:
             session.rollback()
-            logger.error(f"Error al sembrar usuario por defecto: {exc}")
+            logger.error(f"Error al sembrar usuarios: {exc}")
         finally:
             session.close()
 
