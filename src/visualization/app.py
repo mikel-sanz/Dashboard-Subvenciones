@@ -382,6 +382,52 @@ with tab_dashboard:
             "los filtros del sidebar."
         )
 
+    # --- 9. EXPORTACIÓN DE INFORMES ---
+    if not df_filtrado.empty:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<h3 style='color:#012A4A; font-family:sans-serif;'>"
+            "Exportar Informes</h3>",
+            unsafe_allow_html=True,
+        )
+        st.write(
+            "Descarga los datos filtrados en formato corporativo "
+            "para compartirlos con tu equipo o incluirlos en "
+            "documentación oficial."
+        )
+
+        from src.visualization.reports import ReportExporter
+
+        col_excel, col_pdf = st.columns(2)
+
+        with col_excel:
+            excel_bytes = ReportExporter.generar_excel(
+                df_filtrado
+            )
+            st.download_button(
+                label="📥 Descargar Excel (.xlsx)",
+                data=excel_bytes,
+                file_name="informe_subvenciones.xlsx",
+                mime=(
+                    "application/vnd.openxmlformats-"
+                    "officedocument.spreadsheetml.sheet"
+                ),
+                key="btn_download_excel",
+            )
+
+        with col_pdf:
+            pdf_bytes = ReportExporter.generar_pdf(
+                df_filtrado
+            )
+            st.download_button(
+                label="📄 Descargar PDF",
+                data=pdf_bytes,
+                file_name="informe_subvenciones.pdf",
+                mime="application/pdf",
+                key="btn_download_pdf",
+            )
+
+
 with tab_admin:
     st.markdown(
         "<h2 style='color:#012A4A; font-family:sans-serif;'>"
