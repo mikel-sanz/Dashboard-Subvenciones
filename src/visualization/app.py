@@ -127,7 +127,7 @@ if "scheduler_iniciado" not in st.session_state:
 # --- 2. MECANISMO DE FALLBACK AUTOMÁTICO POR TIEMPO TRANSCURRIDO ---
 if "refresco_inicial_verificado" not in st.session_state:
     session_audit = DBSession.get_session()
-    from src.storage.database import LogAuditoriaDB
+    from src.storage.models import LogAuditoriaDB
     try:
         # Buscar la última acción de ingesta exitosa
         ultimo_log = (
