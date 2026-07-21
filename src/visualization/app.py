@@ -505,7 +505,7 @@ with tab_admin:
             "de red). Se ha activado el fallback a palabras clave de forma "
             "automática."
         )
-    elif SemanticClassifier._model is not None:
+    elif SemanticClassifier._pipeline is not None:
         st.success(
             f"🟢 **NLP Semántico Activo**: Modelo `{settings.NLP_MODEL_NAME}` "
             "cargado correctamente en memoria y precalculando embeddings "
