@@ -30,7 +30,8 @@ from src.processing.normalizer import Normalizer
 import importlib
 import src.storage.database
 importlib.reload(src.storage.database)
-from src.storage.database import DatabaseManager, UsuarioDB
+from src.storage.database import DatabaseManager
+from src.storage.models import UsuarioDB
 from src.storage.db_session import DBSession
 from src.visualization.charts import (
     crear_grafico_barras_actividad,
