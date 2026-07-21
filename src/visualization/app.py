@@ -221,7 +221,8 @@ def cargar_datos_cached() -> pd.DataFrame:
 # --- 1. CARGA DE DATOS ---
 df_original = cargar_datos_cached()
 
-if db_manager.fallback_activo:
+engine_url_str = str(DBSession.get_engine().url)
+if "postgres" in settings.DATABASE_URL and "sqlite" in engine_url_str:
     st.warning(
         "⚠️ **Aviso de Persistencia**: La aplicación no pudo conectarse a la "
         "base de datos PostgreSQL externa configurada. Se ha activado el "
