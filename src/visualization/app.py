@@ -31,6 +31,7 @@ import importlib
 import src.storage.database
 importlib.reload(src.storage.database)
 from src.storage.database import DatabaseManager, UsuarioDB
+from src.storage.db_session import DBSession
 from src.visualization.charts import (
     crear_grafico_barras_actividad,
     crear_grafico_tarta_origen,
@@ -57,7 +58,7 @@ st.set_page_config(
 db_manager = DatabaseManager(settings.DATABASE_URL)
 
 # --- 0. CAPA DE AUTENTICACIÓN ---
-session = db_manager.SessionLocal()
+session = DBSession.get_session()
 try:
     db_users = session.query(UsuarioDB).all()
     credentials = {
@@ -124,7 +125,7 @@ if "scheduler_iniciado" not in st.session_state:
 
 # --- 2. MECANISMO DE FALLBACK AUTOMÁTICO POR TIEMPO TRANSCURRIDO ---
 if "refresco_inicial_verificado" not in st.session_state:
-    session_audit = db_manager.SessionLocal()
+    session_audit = DBSession.get_session()
     from src.storage.database import LogAuditoriaDB
     try:
         # Buscar la última acción de ingesta exitosa
@@ -711,7 +712,7 @@ with tab_users:
     )
 
     # Buscar en base de datos las preferencias del usuario actual
-    session = db_manager.SessionLocal()
+    session = DBSession.get_session()
     user_db = (
         session.query(UsuarioDB)
         .filter(UsuarioDB.username == username_activo)
