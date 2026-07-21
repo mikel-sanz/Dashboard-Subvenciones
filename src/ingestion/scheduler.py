@@ -109,13 +109,13 @@ class IngestionScheduler:
         """
         session = DBSession.get_session()
         try:
-            usuarios = (
+            usuarios_suscritos = (
                 session.query(UsuarioDB)
-                .filter(UsuarioDB.recibir_alertas == 1)
+                .filter(UsuarioDB.recibir_alertas == True)
                 .all()
             )
 
-            for usuario in usuarios:
+            for usuario in usuarios_suscritos:
                 subvenciones_usuario = []
                 for sub in nuevas_subvenciones:
                     # Comparar sector de forma insensible a mayúsculas y espacios
