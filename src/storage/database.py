@@ -102,10 +102,10 @@ class DatabaseManager(UserRepository):
         lo que mejora enormemente el rendimiento en lecturas recurrentes.
         """
         query = (
-            "SELECT Tipo_Subvencion, Cuantia, Fecha_Vigencia, "
-            "Entidad_Convocante, Ambito_Territorial, "
-            "Actividad_Relacionada, URL_Convocatoria, "
-            "Es_Simulado FROM subvenciones"
+            'SELECT "Tipo_Subvencion", "Cuantia", "Fecha_Vigencia", '
+            '"Entidad_Convocante", "Ambito_Territorial", '
+            '"Actividad_Relacionada", "URL_Convocatoria", '
+            '"Es_Simulado" FROM subvenciones'
         )
         try:
             with DBSession.get_engine().connect() as connection:
