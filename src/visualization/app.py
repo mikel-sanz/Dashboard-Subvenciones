@@ -54,6 +54,61 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Inyección de Estilos Globales (CSS Avanzado Midnight Neon)
+st.markdown(
+    """
+    <style>
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    .main .block-container {
+        animation: fadeIn 0.8s ease-out;
+    }
+    h1#title-main {
+        color: #00D2FF !important;
+        font-weight: 800;
+        text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    p.subtitle {
+        text-align: center;
+        color: #94A3B8;
+        font-size: 1.1em;
+        margin-bottom: 30px;
+    }
+    div.stButton > button {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 210, 255, 0.3);
+    }
+    div.stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
+        border-color: #00D2FF;
+    }
+    section[data-testid="stSidebar"] {
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    div[data-testid="metric-container"] {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+    }
+    div[data-testid="metric-container"]:hover {
+        transform: translateY(-3px);
+        border-color: rgba(0, 210, 255, 0.4);
+        box-shadow: 0 8px 15px rgba(0, 210, 255, 0.1);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # Inicialización del gestor de persistencia
 db_manager = DatabaseManager(settings.DATABASE_URL)
@@ -232,15 +287,9 @@ if "postgres" in settings.DATABASE_URL and "sqlite" in engine_url_str:
     )
 
 st.markdown(
-    "<h1 id='title-main' style='color:#012A4A; font-family:sans-serif; "
-    "text-align:center; margin-bottom:10px;'>"
-    "Dashboard Automatizado de Subvenciones Públicas"
-    "</h1>"
-    "<p style='text-align:center; color:#5D6D7E; font-size:1.1em; "
-    "margin-bottom:30px;'>"
-    "Monitoreo en tiempo real de fondos presupuestarios de la Unión "
-    "Europea, el Estado Español y Navarra."
-    "</p>",
+    "<h1 id='title-main'>Dashboard Automatizado de Subvenciones Públicas</h1>"
+    "<p class='subtitle'>Monitoreo en tiempo real de fondos presupuestarios de la Unión "
+    "Europea, el Estado Español y Navarra.</p>",
     unsafe_allow_html=True,
 )
 

@@ -10,9 +10,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Paleta de colores armonizada para el dashboard
-PALETA_COLORES = ["#2A6F97", "#014F86", "#013A63", "#012A4A", "#A9C6E2"]
-COLOR_SIMULADO = "#E63946"  # Color especial si queremos destacar la simulación
+# Paleta de colores armonizada para el dashboard (Neon Dark Mode)
+PALETA_COLORES = ["#00D2FF", "#3A86FF", "#8338EC", "#FF006E", "#38B000"]
+COLOR_SIMULADO = "#FF0000"  # Color especial si queremos destacar la simulación
 
 
 def crear_grafico_barras_actividad(df: pd.DataFrame) -> go.Figure:
@@ -59,14 +59,14 @@ def crear_grafico_barras_actividad(df: pd.DataFrame) -> go.Figure:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={"family": "Inter, sans-serif"},
-        title_font={"size": 16, "color": "#012A4A"},
+        title_font={"size": 16, "color": "#00D2FF"},
     )
 
     # Formatear etiquetas del eje X en euros legibles
     fig.update_layout(xaxis={"tickformat": ",.0f"})
     fig.update_traces(
         hovertemplate="<b>%{y}</b><br>Presupuesto: %{x:,.2f} €<extra></extra>",
-        marker_line_color="#FFFFFF",
+        marker_line_color="#0F172A",
         marker_line_width=1,
     )
 
@@ -104,7 +104,7 @@ def crear_grafico_tarta_origen(df: pd.DataFrame) -> go.Figure:
         margin={"l": 20, "r": 20, "t": 50, "b": 20},
         paper_bgcolor="rgba(0,0,0,0)",
         font={"family": "Inter, sans-serif"},
-        title_font={"size": 16, "color": "#012A4A"},
+        title_font={"size": 16, "color": "#00D2FF"},
     )
 
     fig.update_traces(
