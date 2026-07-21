@@ -14,11 +14,16 @@ from apscheduler.triggers.cron import CronTrigger
 from src.config import settings
 from src.ingestion.espana_bdns import EspanaBdnsExtractor
 from src.ingestion.europa_funding import EuropaFundingExtractor
+from src.ingestion.cordis_extractor import CordisExtractor
+from src.ingestion.ted_extractor import TedExtractor
 from src.ingestion.navarra_ckan import NavarraCkanExtractor
+from src.ingestion.pamplona_extractor import PamplonaExtractor
 from src.notifications.alerts import EmailNotifier
 from src.processing.normalizer import Normalizer
 from src.processing.schemas import SubvencionSchema
-from src.storage.database import DatabaseManager, UsuarioDB
+from src.storage.database import DatabaseManager
+from src.storage.models import UsuarioDB
+from src.storage.db_session import DBSession
 
 # Configuración de logging local
 logger = logging.getLogger(__name__)
@@ -48,6 +53,9 @@ class IngestionScheduler:
             NavarraCkanExtractor(),
             EspanaBdnsExtractor(),
             EuropaFundingExtractor(),
+            PamplonaExtractor(),
+            CordisExtractor(),
+            TedExtractor(),
         ]
 
         registros_crudos = []
@@ -99,7 +107,7 @@ class IngestionScheduler:
         Busca usuarios con alertas activas y envía notificaciones por correo
         si las nuevas subvenciones coinciden con sus intereses.
         """
-        session = self.db_manager.SessionLocal()
+        session = DBSession.get_session()
         try:
             usuarios = (
                 session.query(UsuarioDB)

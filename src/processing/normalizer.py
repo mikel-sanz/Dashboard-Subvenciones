@@ -13,6 +13,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from src.processing.schemas import SubvencionSchema
+from src.processing.classifier import SemanticClassifier
 
 # Configuración de logs
 logger = logging.getLogger(__name__)
@@ -97,116 +98,7 @@ def clasificar_actividad(titulo: str, organo: str) -> str:
     Utiliza el clasificador semántico NLP si está activo; si no,
     hace fallback a la heurística clásica por palabras clave.
     """
-    from src.processing.classifier import SemanticClassifier
     return SemanticClassifier.clasificar(titulo, organo)
-
-
-def clasificar_actividad_clasica(titulo: str, organo: str) -> str:
-    """
-    Clasifica de forma automatizada la subvención en uno de los 5 sectores estratégicos
-    basándose en el análisis de palabras clave en el título y órgano emisor.
-    """
-    texto = (titulo + " " + organo).lower()
-
-    # 1. Digitalización / Robótica
-    patrones_digital = [
-        "digital",
-        "robotic",
-        "ia",
-        "inteligencia artificial",
-        "software",
-        "comput",
-        "comunicaciones",
-        "conectividad",
-        "ciberseguridad",
-        "tecnologias de la informacion",
-        "tic",
-        "internet",
-        "redes",
-        "sensor",
-    ]
-    if any(p in texto for p in patrones_digital):
-        return "Digitalización/Robótica"
-
-    # 2. Transición Verde / Sostenibilidad
-    patrones_verde = [
-        "verde",
-        "sostenib",
-        "clima",
-        "energia",
-        "circular",
-        "ambiental",
-        "ecolog",
-        "descarboni",
-        "renovab",
-        "residuo",
-        "agua",
-        "emisiones",
-        "biodiversidad",
-        "conservacion",
-        "eficiencia energetica",
-    ]
-    if any(p in texto for p in patrones_verde):
-        return "Transición Verde/Sostenibilidad"
-
-    # 3. Agroalimentario
-    patrones_agro = [
-        "agro",
-        "agrari",
-        "agricult",
-        "pesca",
-        "aliment",
-        "cultiv",
-        "ganad",
-        "rural",
-        "granja",
-        "vitivinicola",
-        "feader",
-        "pac ",
-    ]
-    if any(p in texto for p in patrones_agro):
-        return "Agroalimentario"
-
-    # 4. Educación / Social
-    patrones_social = [
-        "empleo",
-        "taller",
-        "laboral",
-        "educa",
-        "joven",
-        "social",
-        "formacion",
-        "capacita",
-        "integra",
-        "beca",
-        "inclusion",
-        "cohesion",
-        "igualdad",
-        "vulnerab",
-        "escuela",
-        "enseñanza",
-    ]
-    if any(p in texto for p in patrones_social):
-        return "Educación/Social"
-
-    # 5. I+D+i Científica (Fallback para investigación técnica)
-    patrones_idi = [
-        "ciencia",
-        "cienti",
-        "investig",
-        "tecnolog",
-        "innovac",
-        "universi",
-        "i+d",
-        "desarrollo experimental",
-        "patente",
-    ]
-    if any(p in texto for p in patrones_idi):
-        return "I+D+i Científica"
-
-    # Si no se detectan patrones específicos, clasificamos en I+D+i por defecto
-    # al ser un dashboard industrial, o bien a Sostenibilidad / Social según contexto.
-    return "I+D+i Científica"
 
 
 class Normalizer:
@@ -270,8 +162,8 @@ class Normalizer:
                 # Navarra CKAN no tiene URLs directas; usamos portal oficial
                 url_convocatoria = "https://www.navarra.es/es/tramites"
 
-            elif origen == "España":
-                # Mapeo para España — BDNS real (endpoint /busqueda)
+            elif origen in ("España", "Pamplona"):
+                # Mapeo para España y Pamplona — BDNS real (endpoint /busqueda)
                 # Campos reales: "descripcion", "fechaRecepcion",
                 # "nivel1", "nivel3", "numeroConvocatoria"
                 # La API de búsqueda NO incluye cuantía presupuestaria
@@ -309,30 +201,30 @@ class Normalizer:
                 else:
                     url_convocatoria = ""
 
-            elif origen == "Europa":
-                # Mapeo para Europa — Datos aplanados del extractor
-                # SEDIA. Campos: "title", "budget", "programme",
-                # "date", "keywords"
-                tipo = (
-                    registro.get("title")
-                    or "European Funding Call"
-                )
-                cuantia = limpiar_importe(
-                    registro.get("budget") or 0.0
-                )
-                fecha = limpiar_fecha(
-                    registro.get("date")
-                    or registro.get("submission_deadline")
-                )
-                entidad = (
-                    registro.get("programme")
-                    or "Comisión Europea"
-                )
-                actividad = clasificar_actividad(
-                    str(tipo), str(entidad)
-                )
-                # URL directa proporcionada por SEDIA
-                url_convocatoria = registro.get("url", "")
+            elif origen in ("Europa", "Europa-CORDIS", "Europa-TED"):
+                if origen == "Europa":
+                    # Mapeo para Europa — Datos aplanados del extractor SEDIA
+                    tipo = registro.get("title") or "European Funding Call"
+                    cuantia = limpiar_importe(registro.get("budget") or 0.0)
+                    fecha = limpiar_fecha(registro.get("date") or registro.get("submission_deadline"))
+                    entidad = registro.get("programme") or "Comisión Europea"
+                    url_convocatoria = registro.get("url", "")
+                elif origen == "Europa-CORDIS":
+                    # Mapeo para CORDIS
+                    tipo = registro.get("projectTitle") or "EU CORDIS Research Project"
+                    cuantia = limpiar_importe(registro.get("totalCost") or 0.0)
+                    fecha = limpiar_fecha(registro.get("endDate"))
+                    entidad = registro.get("fundingScheme") or "European Commission - CORDIS"
+                    url_convocatoria = registro.get("projectUrl", "")
+                elif origen == "Europa-TED":
+                    # Mapeo para TED
+                    tipo = registro.get("contractTitle") or "EU TED Public Procurement"
+                    cuantia = limpiar_importe(registro.get("estimatedValue") or 0.0)
+                    fecha = limpiar_fecha(registro.get("deadlineDate"))
+                    entidad = registro.get("authority") or "EU Contracting Authority"
+                    url_convocatoria = registro.get("noticeUrl", "")
+
+                actividad = clasificar_actividad(str(tipo), str(entidad))
             else:
                 logger.error(
                     f"Registro con origen desconocido "

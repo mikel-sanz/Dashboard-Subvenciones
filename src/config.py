@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///data/processed/subvenciones.db"
 
     # Autenticación y Seguridad
-    JWT_SECRET: str = "super_secret_jwt_key_here"
+    JWT_SECRET: str  # Secreto eliminado. Ahora es obligatorio inyectarlo vía .env
     COOKIE_EXPIRY_DAYS: int = 30
 
     # Comportamiento de ingesta
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
 
     # Clasificador Semántico NLP
     USE_SEMANTIC_CLASSIFIER: bool = True
-    NLP_MODEL_NAME: str = "paraphrase-multilingual-MiniLM-L12-v2"
+    NLP_MODEL_NAME: str = "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
 
     # Configuración de carga de archivos externos
     model_config = SettingsConfigDict(

@@ -10,7 +10,9 @@ from typing import Generator
 import pytest
 
 from src.config import settings
-from src.storage.database import Base, DatabaseManager
+from src.storage.database import DatabaseManager
+from src.storage.models import Base
+from src.storage.db_session import DBSession
 
 
 @pytest.fixture(autouse=True)
@@ -47,5 +49,6 @@ def db_manager_in_memory() -> Generator[DatabaseManager, None, None]:
     yield manager
 
     # Limpiamos las tablas y cerramos conexiones
-    Base.metadata.drop_all(bind=manager.engine)
-    manager.engine.dispose()
+    engine = DBSession.get_engine()
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()

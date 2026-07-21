@@ -75,7 +75,7 @@ finally:
 
 authenticator = stauth.Authenticate(
     credentials=credentials,
-    cookie_name="subvenciones_dashboard_cookie",
+    cookie_name="moriarty_session_v2",
     key=settings.JWT_SECRET,
     cookie_expiry_days=settings.COOKIE_EXPIRY_DAYS,
 )
@@ -734,9 +734,10 @@ with tab_users:
         "Transición Verde/Sostenibilidad",
         "Agroalimentario",
         "Educación/Social",
-        "I+D+i Científica"
+        "I+D+i Científica",
+        "Emprendimiento/Startups"
     ]
-    AMBITOS_OPCIONES = ["Europa", "España", "Navarra"]
+    AMBITOS_OPCIONES = ["Europa", "España", "Navarra", "Pamplona"]
 
     # Procesar defaults
     default_sectores = (

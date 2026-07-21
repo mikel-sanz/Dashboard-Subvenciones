@@ -13,13 +13,14 @@ from pydantic import BaseModel, Field, field_validator
 
 # Definición de tipos literales para restringir y categorizar de forma estricta
 # el ámbito geográfico y el sector de actividad, según los requisitos.
-AmbitoTerritorialType = Literal["Europa", "España", "Navarra"]
+AmbitoTerritorialType = Literal["Europa", "España", "Navarra", "Pamplona"]
 ActividadRelacionadaType = Literal[
     "Digitalización/Robótica",
     "Transición Verde/Sostenibilidad",
     "Agroalimentario",
     "Educación/Social",
     "I+D+i Científica",
+    "Emprendimiento/Startups",
 ]
 
 

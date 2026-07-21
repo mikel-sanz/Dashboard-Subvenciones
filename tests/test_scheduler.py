@@ -8,7 +8,9 @@ Licencia: Propietaria NEXO Ecosystem.
 from unittest.mock import patch
 
 from src.ingestion.scheduler import IngestionScheduler
-from src.storage.database import DatabaseManager, UsuarioDB
+from src.storage.database import DatabaseManager
+from src.storage.models import UsuarioDB
+from src.storage.db_session import DBSession
 
 
 def test_scheduler_flujo_completo_con_notificaciones(
@@ -38,6 +40,9 @@ def test_scheduler_flujo_completo_con_notificaciones(
     path_nav = "src.ingestion.navarra_ckan.NavarraCkanExtractor.extract"
     path_esp = "src.ingestion.espana_bdns.EspanaBdnsExtractor.extract"
     path_eur = "src.ingestion.europa_funding.EuropaFundingExtractor.extract"
+    path_pam = "src.ingestion.pamplona_extractor.PamplonaExtractor.extract"
+    path_cor = "src.ingestion.cordis_extractor.CordisExtractor.extract"
+    path_ted = "src.ingestion.ted_extractor.TedExtractor.extract"
     path_send = "src.notifications.alerts.EmailNotifier.enviar_correo"
 
     # Mockear extractores de Navarra, España y Europa
@@ -45,9 +50,15 @@ def test_scheduler_flujo_completo_con_notificaciones(
         patch(path_nav) as mock_nav,
         patch(path_esp) as mock_esp,
         patch(path_eur) as mock_eur,
+        patch(path_pam) as mock_pam,
+        patch(path_cor) as mock_cor,
+        patch(path_ted) as mock_ted,
         patch(path_send) as mock_send,
     ):
         mock_nav.return_value = []
+        mock_pam.return_value = []
+        mock_cor.return_value = []
+        mock_ted.return_value = []
         # España BDNS retorna datos con el formato del normalizador
         mock_esp.return_value = [
             {
@@ -67,7 +78,7 @@ def test_scheduler_flujo_completo_con_notificaciones(
 
     # Assert
     # Verificar persistencia en base de datos
-    session = db.SessionLocal()
+    session = DBSession.get_session()
     conteo = (
         session.query(UsuarioDB)
         .filter(UsuarioDB.username == username)

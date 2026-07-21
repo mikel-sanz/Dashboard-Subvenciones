@@ -8,7 +8,9 @@ la prevención efectiva de duplicados lógicos y la lectura a DataFrames de Pand
 import datetime
 
 from src.processing.schemas import SubvencionSchema
-from src.storage.database import DatabaseManager, SubvencionDB
+from src.storage.database import DatabaseManager
+from src.storage.models import SubvencionDB, UsuarioDB
+from src.storage.db_session import DBSession
 
 
 def test_insertar_y_cargar_dataframe(db_manager_in_memory: DatabaseManager) -> None:
@@ -92,11 +94,11 @@ def test_prevencion_duplicados_deterministica(
     assert res2 == 0
 
     # Comprobación física en base de datos
-    session = db.SessionLocal()
-    conteo_fisico = session.query(SubvencionDB).count()
+    session = DBSession.get_session()
+    en_bd = session.query(SubvencionDB).count()
     session.close()
 
-    assert conteo_fisico == 1
+    assert en_bd == 1
 
 
 def test_alta_usuario_y_validar_credenciales(
@@ -219,8 +221,7 @@ def test_actualizar_preferencias_alertas(db_manager_in_memory) -> None:
     assert err_msg == ""
 
     # Validar persistencia real en la sesión de base de datos
-    session = db.SessionLocal()
-    from src.storage.database import UsuarioDB
+    session = DBSession.get_session()
     user_db = session.query(UsuarioDB).filter(
         UsuarioDB.username == username.upper()
     ).first()

@@ -8,10 +8,9 @@ Licencia: Propietaria NEXO Ecosystem.
 import sys
 from unittest.mock import MagicMock, patch
 
-# Inyección preventiva en sys.modules para permitir tests sin la librería instalada
-if "sentence_transformers" not in sys.modules:
-    mock_sentence_transformers = MagicMock()
-    sys.modules["sentence_transformers"] = mock_sentence_transformers
+if "transformers" not in sys.modules:
+    mock_transformers = MagicMock()
+    sys.modules["transformers"] = mock_transformers
 
 from src.processing.classifier import SemanticClassifier
 
@@ -35,31 +34,23 @@ def test_clasificacion_heuristica_clasica_desactivada() -> None:
 
 def test_clasificacion_semantica_nlp_exito() -> None:
     """
-    ARRANGE: Mockear el comportamiento de SentenceTransformer para retornar
-            embeddings controlados que simulen una clasificación exitosa.
+    ARRANGE: Mockear el comportamiento de pipeline para retornar un dict controlado.
     ACT: Clasificar una subvención.
-    ASSERT: Verificar que retorna el sector con mayor similitud de coseno.
+    ASSERT: Verificar que retorna el sector devuelto por el modelo.
     """
     # Arrange
-    mock_model = MagicMock()
-    # Mockear encode: la consulta y los 5 sectores
-    mock_model.encode.side_effect = [
-        [1.0, 0.0, 0.0, 0.0, 0.0],  # Consulta
-        [0.9, 0.0, 0.0, 0.0, 0.0],  # Sector 1: Digitalización
-        [0.1, 0.0, 0.0, 0.0, 0.0],  # Sector 2: Verde
-        [0.0, 0.1, 0.0, 0.0, 0.0],  # Sector 3: Agro
-        [0.0, 0.0, 0.1, 0.0, 0.0],  # Sector 4: Social
-        [0.0, 0.0, 0.0, 0.1, 0.0],  # Sector 5: I+D
-    ]
+    mock_pipeline = MagicMock()
+    mock_pipeline.return_value = {
+        "labels": ["Digitalización y Robótica", "Transición Verde y Sostenibilidad"],
+        "scores": [0.95, 0.05]
+    }
 
-    # Resetear estado interno del clasificador para forzar carga perezosa
-    SemanticClassifier._model = None
-    SemanticClassifier._sector_embeddings = None
+    SemanticClassifier._pipeline = None
     SemanticClassifier._usar_fallback = False
 
     with (
         patch("src.config.settings.USE_SEMANTIC_CLASSIFIER", True),
-        patch("sentence_transformers.SentenceTransformer", return_value=mock_model),
+        patch("transformers.pipeline", return_value=mock_pipeline),
     ):
         # Act
         sector = SemanticClassifier.clasificar(
@@ -78,15 +69,13 @@ def test_clasificacion_semantica_fallback_por_excepcion() -> None:
     ACT: Clasificar un registro.
     ASSERT: Verificar que se activa el fallback y se devuelve la heurística clásica.
     """
-    # Resetear estado
-    SemanticClassifier._model = None
-    SemanticClassifier._sector_embeddings = None
+    SemanticClassifier._pipeline = None
     SemanticClassifier._usar_fallback = False
 
     with (
         patch("src.config.settings.USE_SEMANTIC_CLASSIFIER", True),
         patch(
-            "sentence_transformers.SentenceTransformer",
+            "transformers.pipeline",
             side_effect=RuntimeError("Falta de memoria RAM"),
         ),
     ):
