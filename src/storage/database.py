@@ -10,6 +10,7 @@ import hashlib
 import logging
 import pandas as pd
 import streamlit as st
+from sqlalchemy import text
 
 from src.config import settings
 from src.processing.schemas import SubvencionSchema
@@ -46,7 +47,29 @@ class DatabaseManager(UserRepository):
         DBSession.initialize(db_url, force=force_init)
         # Migraciones y semilla de datos (heredados)
         self._migrar_usuarios_columnas()
+        self._migrar_subvenciones_columnas()
         self.sembrar_usuario_defecto()
+
+    def _migrar_subvenciones_columnas(self) -> None:
+        """Añade columnas nuevas a la tabla subvenciones sin perder registros."""
+        columnas_migracion = {
+            "Tipo_Financiacion": "VARCHAR DEFAULT 'Pública' NOT NULL",
+        }
+        with DBSession.get_engine().connect() as conn:
+            for col_name, col_type in columnas_migracion.items():
+                try:
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE subvenciones ADD COLUMN "
+                            f"{col_name} {col_type}"
+                        )
+                    )
+                    conn.commit()
+                    logger.info(
+                        f"Columna '{col_name}' añadida a subvenciones."
+                    )
+                except Exception:
+                    pass
 
     def bulk_insert(self, subvenciones: list[SubvencionSchema]) -> int:
         """Inserta una lista de esquemas en lote, previniendo duplicados."""
@@ -72,6 +95,7 @@ class DatabaseManager(UserRepository):
                         Ambito_Territorial=sub.Ambito_Territorial,
                         Actividad_Relacionada=sub.Actividad_Relacionada,
                         URL_Convocatoria=sub.URL_Convocatoria,
+                        Tipo_Financiacion=sub.Tipo_Financiacion,
                         Es_Simulado=sub.Es_Simulado,
                         Hash_Unico=hash_val,
                     )
@@ -105,7 +129,7 @@ class DatabaseManager(UserRepository):
             'SELECT "Tipo_Subvencion", "Cuantia", "Fecha_Vigencia", '
             '"Entidad_Convocante", "Ambito_Territorial", '
             '"Actividad_Relacionada", "URL_Convocatoria", '
-            '"Es_Simulado" FROM subvenciones'
+            '"Tipo_Financiacion", "Es_Simulado" FROM subvenciones'
         )
         try:
             with DBSession.get_engine().connect() as connection:
@@ -114,6 +138,10 @@ class DatabaseManager(UserRepository):
                     df["Fecha_Vigencia"] = pd.to_datetime(df["Fecha_Vigencia"]).dt.date
                     if "Es_Simulado" in df.columns:
                         df["Es_Simulado"] = df["Es_Simulado"].astype(bool)
+                    if "Tipo_Financiacion" not in df.columns:
+                        df["Tipo_Financiacion"] = "Pública"
+                    else:
+                        df["Tipo_Financiacion"] = df["Tipo_Financiacion"].fillna("Pública")
                 return df
         except Exception as exc:
             logger.error(f"Error al cargar datos a DataFrame: {exc}")
@@ -125,6 +153,8 @@ class DatabaseManager(UserRepository):
                     "Entidad_Convocante",
                     "Ambito_Territorial",
                     "Actividad_Relacionada",
+                    "URL_Convocatoria",
+                    "Tipo_Financiacion",
                     "Es_Simulado",
                 ]
             )

@@ -18,6 +18,7 @@ from src.ingestion.cordis_extractor import CordisExtractor
 from src.ingestion.ted_extractor import TedExtractor
 from src.ingestion.navarra_ckan import NavarraCkanExtractor
 from src.ingestion.pamplona_extractor import PamplonaExtractor
+from src.ingestion.private_foundations import PrivateFoundationsExtractor
 from src.notifications.alerts import EmailNotifier
 from src.processing.normalizer import Normalizer
 from src.processing.schemas import SubvencionSchema
@@ -56,6 +57,7 @@ class IngestionScheduler:
             PamplonaExtractor(),
             CordisExtractor(),
             TedExtractor(),
+            PrivateFoundationsExtractor(),
         ]
 
         registros_crudos = []

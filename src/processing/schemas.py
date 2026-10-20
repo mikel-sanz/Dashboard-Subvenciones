@@ -12,8 +12,9 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 # Definición de tipos literales para restringir y categorizar de forma estricta
-# el ámbito geográfico y el sector de actividad, según los requisitos.
+# el ámbito geográfico, el origen de fondos y el sector de actividad.
 AmbitoTerritorialType = Literal["Europa", "España", "Navarra", "Pamplona"]
+TipoFinanciacionType = Literal["Pública", "Privada"]
 ActividadRelacionadaType = Literal[
     "Digitalización/Robótica",
     "Transición Verde/Sostenibilidad",
@@ -60,6 +61,12 @@ class SubvencionSchema(BaseModel):
     URL_Convocatoria: str = Field(
         "",
         description="Enlace a la página oficial de la convocatoria.",
+    )
+
+    # Origen de los fondos (Pública o Privada/Fundación)
+    Tipo_Financiacion: TipoFinanciacionType = Field(
+        "Pública",
+        description="Origen de los fondos: Pública o Privada.",
     )
 
     # Campos de control y señalización requeridos para datos simulados

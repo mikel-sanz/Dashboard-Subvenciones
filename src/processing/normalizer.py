@@ -115,9 +115,31 @@ class Normalizer:
         """
         origen = registro.get("_extractor_source")
         es_simulado = bool(registro.get("_is_simulated", False))
+        tipo_financiacion = str(
+            registro.get("_tipo_financiacion", "Pública")
+        )
+        ambito_final = str(origen) if origen else "España"
 
         try:
-            if origen == "Navarra":
+            if origen == "Privada":
+                tipo = (
+                    registro.get("titulo")
+                    or "Convocatoria de Fundación Privada"
+                )
+                cuantia = limpiar_importe(registro.get("cuantia") or 0.0)
+                fecha = limpiar_fecha(registro.get("fecha_vigencia"))
+                entidad = (
+                    registro.get("entidad") or "Fundación Privada"
+                )
+                ambito_final = str(registro.get("ambito") or "España")
+                actividad = str(
+                    registro.get("sector")
+                    or clasificar_actividad(str(tipo), str(entidad))
+                )
+                url_convocatoria = str(registro.get("url") or "")
+                tipo_financiacion = "Privada"
+
+            elif origen == "Navarra":
                 # Mapeo para Navarra — CKAN real (Rehabilitación
                 # protegida) y datos simulados
                 # Campos reales CKAN: "OrgGestor/Capit/Partida
@@ -225,6 +247,7 @@ class Normalizer:
                     url_convocatoria = registro.get("noticeUrl", "")
 
                 actividad = clasificar_actividad(str(tipo), str(entidad))
+                ambito_final = "Europa"
             else:
                 logger.error(
                     f"Registro con origen desconocido "
@@ -238,9 +261,10 @@ class Normalizer:
                 Cuantia=float(cuantia),
                 Fecha_Vigencia=fecha,
                 Entidad_Convocante=str(entidad),
-                Ambito_Territorial=origen,  # type: ignore
+                Ambito_Territorial=ambito_final,  # type: ignore
                 Actividad_Relacionada=actividad,  # type: ignore
                 URL_Convocatoria=url_convocatoria,
+                Tipo_Financiacion=tipo_financiacion,  # type: ignore
                 Es_Simulado=es_simulado,
             )
         except Exception as exc:

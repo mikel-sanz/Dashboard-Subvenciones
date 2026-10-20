@@ -21,6 +21,7 @@ class SubvencionDB(Base):  # type: ignore
     Ambito_Territorial = Column(String, nullable=False)
     Actividad_Relacionada = Column(String, nullable=False)
     URL_Convocatoria = Column(String, default="", nullable=False)
+    Tipo_Financiacion = Column(String, default="Pública", nullable=False)
     Es_Simulado = Column(Boolean, default=False, nullable=False)
     Hash_Unico = Column(String, unique=True, nullable=False, index=True)
 

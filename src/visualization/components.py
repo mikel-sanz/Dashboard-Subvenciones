@@ -48,6 +48,26 @@ def render_sidebar_filters(df: pd.DataFrame) -> dict[str, Any]:
     """
     st.sidebar.markdown(css_multiselect, unsafe_allow_html=True)
 
+    # 0. Filtro por Origen de Fondos (Pública / Privada)
+    if "Tipo_Financiacion" in df.columns and not df.empty:
+        tipos_disp = sorted(df["Tipo_Financiacion"].dropna().unique().tolist())
+    else:
+        tipos_disp = ["Pública", "Privada"]
+
+    for t_base in ["Pública", "Privada"]:
+        if t_base not in tipos_disp:
+            tipos_disp.append(t_base)
+
+    tipos_seleccionados = st.sidebar.multiselect(
+        "Origen de Fondos:",
+        options=tipos_disp,
+        default=tipos_disp,
+        help=(
+            "Filtre entre subvenciones públicas oficiales y "
+            "ayudas de fundaciones privadas."
+        ),
+    )
+
     # 1. Filtro por Ámbito Territorial
     ambitos_disponibles = sorted(df["Ambito_Territorial"].unique().tolist())
     ambitos_seleccionados = st.sidebar.multiselect(
@@ -115,6 +135,7 @@ def render_sidebar_filters(df: pd.DataFrame) -> dict[str, Any]:
     )
 
     return {
+        "tipos_financiacion": tipos_seleccionados,
         "ambitos": ambitos_seleccionados,
         "sectores": sectores_seleccionados,
         "estado_vigencia": estado_vigencia,
@@ -141,11 +162,11 @@ def render_kpi_metrics(df: pd.DataFrame) -> None:
     with col1:
         st.metric(
             label="PRESUPUESTO TOTAL ANALIZADO",
-            value=f"{presupuesto_total:,.2f} €"
+            value=f"{presupuesto_total:,.2f} €",
         )
 
     with col2:
         st.metric(
             label="CONVOCATORIAS ACTIVAS VIGENTES",
-            value=f"{lineas_activas_cnt} Líneas"
+            value=f"{lineas_activas_cnt} Líneas",
         )
